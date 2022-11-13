@@ -1,59 +1,79 @@
 import * as THREE from 'three';
-import { FlatShading } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 
-const scene = new THREE.Scene();
-scene.add(new THREE.AxesHelper(10));
+//Application
+(() => {
+  // three-js variables
+  let scene;
+  let renderer;
+  let camera;
+  let controls;
+  let stats;
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1, 1000
-);
+  // three-js elements
+  let cube
+  let sphere;
 
-//const renderer = new THREE.WebGLRenderer({alpha: true});
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x969696);
-document.body.appendChild(renderer.domElement);
+  const init = () => {
+    console.log("initialize scene");
+    scene = new THREE.Scene();
+    scene.add(new THREE.AxesHelper(100));
 
-const controls = new OrbitControls( camera, renderer.domElement );
+    console.log("initialize renderer");
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x3f67b5);
+    document.body.appendChild(renderer.domElement);
 
-camera.position.set(0, 20, 100);
-controls.update();
+    console.log("initialize camera");
+    const near = 0.1;
+    const far = 1000.0;
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, near, far);
+    camera.position.set(0, 0, 5);
 
-const boxGeometry = new THREE.BoxGeometry();
-const sphereGeometry = new THREE.SphereGeometry(2, 50, 32)
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.update();
 
-const material = new THREE.MeshNormalMaterial();
-// const material = new THREE.MeshBasicMaterial({
-//   color: 0x00ff00,
-//   wireframe: true
-// })
-material.flatShading = true;
+    stats = new Stats();
+    document.body.appendChild(stats.dom);
 
-const cube = new THREE.Mesh(boxGeometry, material);
-cube.position.x = 5;
-scene.add(cube);
+    // elements (grid)
+    const gridSize = 10;
+    const gridDiv = 10;
+    const gridHelper = new THREE.GridHelper(gridSize, gridDiv);
+    scene.add(gridHelper);
 
-const sphere = new THREE.Mesh(sphereGeometry, material)
-sphere.position.x = 3
-scene.add(sphere)
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
 
-const stats = Stats()
-document.body.appendChild(stats.dom);
+    const sphereGeometry = new THREE.SphereGeometry(2, 50, 32);
+    const sphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ff00,
+      wireframe: true
+    })
+    sphereMaterial.flatShading = true;
 
-function animate() {
-  requestAnimationFrame(animate);
+    sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+    sphere.position.x = 10
+    scene.add(sphere)
+  };
 
-  //cube.rotation.x += 0.01;
-  //cube.rotation.y += 0.01;
+  const animate = () => {
+    requestAnimationFrame(animate);
 
-  renderer.render(scene, camera);
+    sphere.rotation.x += 0.01;
+    sphere.rotation.y += 0.01;
 
-  stats.update();
-  controls.update();
-};
+    controls.update();
+    stats.update();
 
-animate();
+    renderer.render(scene, camera);
+  }
+
+  init();
+  animate();
+
+})();
