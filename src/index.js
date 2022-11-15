@@ -15,6 +15,11 @@ import { GUI } from 'dat.gui'
   let guiCamera;
   let guiShot;
 
+  let index;
+  let beginShot;
+  let sampleShotdata;
+  let cylinderGeom, cylinerMaterial, cylinder;
+
   let shotCtrl = {
     ballSpeed :60,
     launchAngle : 10,
@@ -92,10 +97,37 @@ import { GUI } from 'dat.gui'
     stats.update();
 
     renderer.render(scene, camera);
+
+    if(beginShot) {
+      updateShot();
+    }
   }
 
   function shotFunc() {
-    alert('shot!');
+    // sample
+    fetch('../asset/sample.json')
+      .then(response => response.json())
+      .then(data => {
+        console.log("json data: ", data);
+        sampleShotdata = data;
+      })
+      .catch(error => console.log(error));
+
+    beginShot = true;
+    index = 0;
+
+    cylinderGeom = new THREE.CylinderGeometry(3, 3, 5, 32);
+    cylinerMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    cylinder = new THREE.Mesh(cylinderGeom, cylinerMaterial);
+    scene.add(cylinder);
+  }
+
+  function updateShot() {
+    cylinder.position.x = sampleShotdata.points[index].x; 
+    cylinder.position.y = sampleShotdata.points[index].z; 
+    cylinder.position.z = sampleShotdata.points[index].y; 
+    index += 1;
+    //cylinder.rotation.x+=0.01;
   }
 
   init();

@@ -54029,7 +54029,7 @@ var controllers = {
 var dom$1 = { dom: dom };
 var dat_gui_module_gui = { GUI: GUI };
 var GUI$1 = GUI;
-var index = {
+var dat_gui_module_index = {
   color: color,
   controllers: controllers,
   dom: dom$1,
@@ -54038,7 +54038,7 @@ var index = {
 };
 
 
-/* harmony default export */ var dat_gui_module = (index);
+/* harmony default export */ var dat_gui_module = (dat_gui_module_index);
 //# sourceMappingURL=dat.gui.module.js.map
 
 // CONCATENATED MODULE: ./src/index.js
@@ -54058,6 +54058,11 @@ var index = {
   let gui;
   let guiCamera;
   let guiShot;
+
+  let index;
+  let beginShot;
+  let sampleShotdata;
+  let cylinderGeom, cylinerMaterial, cylinder;
 
   let shotCtrl = {
     ballSpeed :60,
@@ -54118,7 +54123,7 @@ var index = {
     scene.add(cube);
 
     const sphereGeometry = new SphereGeometry(2, 50, 32);
-    const sphereMaterial = new MeshNormalMaterial(); ``
+    const sphereMaterial = new MeshNormalMaterial();
     sphereMaterial.flatShading = true;
 
     sphere = new Mesh(sphereGeometry, sphereMaterial)
@@ -54136,10 +54141,37 @@ var index = {
     stats.update();
 
     renderer.render(scene, camera);
+
+    if(beginShot) {
+      updateShot();
+    }
   }
 
   function shotFunc() {
-    alert('shot!');
+    // sample
+    fetch('../asset/sample.json')
+      .then(response => response.json())
+      .then(data => {
+        console.log("json data: ", data);
+        sampleShotdata = data;
+      })
+      .catch(error => console.log(error));
+
+    beginShot = true;
+    index = 0;
+
+    cylinderGeom = new CylinderGeometry(3, 3, 5, 32);
+    cylinerMaterial = new MeshBasicMaterial({ color: 0xffff00 });
+    cylinder = new Mesh(cylinderGeom, cylinerMaterial);
+    scene.add(cylinder);
+  }
+
+  function updateShot() {
+    cylinder.position.x = sampleShotdata.points[index].x; 
+    cylinder.position.y = sampleShotdata.points[index].z; 
+    cylinder.position.z = sampleShotdata.points[index].y; 
+    index += 1;
+    //cylinder.rotation.x+=0.01;
   }
 
   init();
