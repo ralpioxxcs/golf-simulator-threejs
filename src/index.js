@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
+import { GUI } from 'dat.gui'
 
 //Application
 (() => {
@@ -10,6 +11,16 @@ import Stats from 'three/examples/jsm/libs/stats.module'
   let camera;
   let controls;
   let stats;
+  let gui;
+  let guiCamera;
+  let guiShot;
+
+  let shotCtrl = {
+    ballSpeed :60,
+    launchAngle : 10,
+    directionAngle : 1,
+    action: shotFunc,
+  };
 
   // three-js elements
   let cube
@@ -30,13 +41,26 @@ import Stats from 'three/examples/jsm/libs/stats.module'
     const near = 0.1;
     const far = 1000.0;
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, near, far);
-    camera.position.set(0, 0, 5);
+    camera.position.set(20, 30, 20);
+    camera.lookAt(0, 0, 0);
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
 
     stats = new Stats();
-    document.body.appendChild(stats.dom);
+    document.body.appendChild(stats.domElement);
+
+    gui = new GUI();
+    guiCamera = gui.addFolder('Camera');
+    guiCamera.add(camera.position, 'z', 0, 10);
+    guiCamera.open();
+
+    guiShot = gui.addFolder('Shot');
+    guiShot.add(shotCtrl, 'ballSpeed', 0, 100, 1);
+    guiShot.add(shotCtrl, 'launchAngle', 0, 50, 1);
+    guiShot.add(shotCtrl, 'directionAngle', 0, 50, 1);
+    guiShot.add(shotCtrl, 'action');
+    guiShot.open();
 
     // elements (grid)
     const gridSize = 10;
@@ -50,10 +74,7 @@ import Stats from 'three/examples/jsm/libs/stats.module'
     scene.add(cube);
 
     const sphereGeometry = new THREE.SphereGeometry(2, 50, 32);
-    const sphereMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ff00,
-      wireframe: true
-    })
+    const sphereMaterial = new THREE.MeshNormalMaterial();
     sphereMaterial.flatShading = true;
 
     sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
@@ -71,6 +92,10 @@ import Stats from 'three/examples/jsm/libs/stats.module'
     stats.update();
 
     renderer.render(scene, camera);
+  }
+
+  function shotFunc() {
+    alert('shot!');
   }
 
   init();
