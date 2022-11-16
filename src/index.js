@@ -1,15 +1,12 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'dat.gui'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 //Application
 (() => {
   // three-js variables
-  let scene;
-  let renderer;
-  let camera;
-  let controls;
+  let scene, renderer, camera, controls;
   let stats;
   let gui;
   let guiCamera;
@@ -17,13 +14,16 @@ import { GUI } from 'dat.gui'
 
   let index;
   let beginShot;
-  let sampleShotdata;
-  let cylinderGeom, cylinerMaterial, cylinder;
+  let sampleShotdata = {
+    points : [],
+  };
+
+  let cylinderGeom, cylinerMaterial, cylinder, line;
 
   let shotCtrl = {
-    ballSpeed :60,
-    launchAngle : 10,
-    directionAngle : 1,
+    ballSpeed: 60,
+    launchAngle: 10,
+    directionAngle: 1,
     action: shotFunc,
   };
 
@@ -34,7 +34,7 @@ import { GUI } from 'dat.gui'
   const init = () => {
     console.log("initialize scene");
     scene = new THREE.Scene();
-    scene.add(new THREE.AxesHelper(100));
+    scene.add(new THREE.AxesHelper(20));
 
     console.log("initialize renderer");
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -43,14 +43,12 @@ import { GUI } from 'dat.gui'
     document.body.appendChild(renderer.domElement);
 
     console.log("initialize camera");
-    const near = 0.1;
-    const far = 1000.0;
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, near, far);
-    camera.position.set(20, 30, 20);
-    camera.lookAt(0, 0, 0);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+    camera.position.set(-40, 10, 60);
 
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.update();
+    controls.minDistance = 10;
+    controls.maxDistance = 500;
 
     stats = new Stats();
     document.body.appendChild(stats.domElement);
@@ -98,7 +96,7 @@ import { GUI } from 'dat.gui'
 
     renderer.render(scene, camera);
 
-    if(beginShot) {
+    if (beginShot) {
       updateShot();
     }
   }
@@ -110,24 +108,56 @@ import { GUI } from 'dat.gui'
       .then(data => {
         console.log("json data: ", data);
         sampleShotdata = data;
+
+        // ... init points here
+        // create line segments
+        const points = [];
+        sampleShotdata.points.forEach(element => {
+          console.log(element.x, element.z, element.y);
+          points.push(new THREE.Vector3(element.x, element.z, element.y));
+        });
+        const material = new THREE.LineBasicMaterial({
+          color: 0xff3311
+        });
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+        line = new THREE.Line(geometry, material);
+        line.geometry.setDrawRange(0, 0);
+        scene.add(line);
+
       })
       .catch(error => console.log(error));
+
+
+    // const lineGeomtry = new lineGeomtry();
+    // lineGeomtry.setPositions(positions
 
     beginShot = true;
     index = 0;
 
-    cylinderGeom = new THREE.CylinderGeometry(3, 3, 5, 32);
-    cylinerMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    cylinderGeom = new THREE.CylinderGeometry(2, 2, 5, 20);
+    cylinerMaterial = new THREE.MeshBasicMaterial({ color: 0xff3300 });
     cylinder = new THREE.Mesh(cylinderGeom, cylinerMaterial);
     scene.add(cylinder);
   }
 
   function updateShot() {
-    cylinder.position.x = sampleShotdata.points[index].x; 
-    cylinder.position.y = sampleShotdata.points[index].z; 
-    cylinder.position.z = sampleShotdata.points[index].y; 
+    line.geometry.setDrawRange(0, index++);
+    /*
+    cylinder.position.x = sampleShotdata.points[index].x;
+    cylinder.position.y = sampleShotdata.points[index].z;
+    cylinder.position.z = sampleShotdata.points[index].y;
+    */
+
+    /*
     index += 1;
+    const cylinderNew = new THREE.Mesh(cylinderGeom, cylinerMaterial);
+    cylinderNew.position.x = sampleShotdata.points[index].x;
+    cylinderNew.position.y = sampleShotdata.points[index].z;
+    cylinderNew.position.z = sampleShotdata.points[index].y;
+    scene.add(cylinderNew);
     //cylinder.rotation.x+=0.01;
+    */
   }
 
   init();
