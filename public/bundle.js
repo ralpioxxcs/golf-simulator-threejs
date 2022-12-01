@@ -52871,13 +52871,13 @@ var controllers = {
   ColorController: ColorController
 };
 var dom$1 = { dom: dom };
-var dat_gui_module_gui = { GUI: GUI };
+var gui = { GUI: GUI };
 var GUI$1 = GUI;
 var dat_gui_module_index = {
   color: color,
   controllers: controllers,
   dom: dom$1,
-  gui: dat_gui_module_gui,
+  gui: gui,
   GUI: GUI$1
 };
 
@@ -54050,80 +54050,40 @@ MapControls.prototype.constructor = MapControls;
 // Application
 (() => {
   "use strict";
-
-  function Application (){
+  function Application() {
     this.threejs = {
-      scene : null,
-      renderer,
-      camera,
-      controls,
-      stats,
-      gui,
-      guiCamera,
-      guiShot,
-      cube,
-      sphere,
-      cylinderGeom,
-      cylinerMaterial,
-      cylinder,
-      line,
+      scene: null,
+      renderer: null,
+      camera: null,
+      controls: null,
+      stats: null,
+      gui: null,
+      guiCamera: null,
+      guiShot: null,
+      cube: null,
+      sphere: null,
+      cylinderGeom: null,
+      cylinerMaterial: null,
+      cylinder: null,
+      line: null,
     };
 
     this.shotdata = {
-      index,
+      index: null,
       sampleShotdata: {
         points: [],
       },
     };
 
     this.state = {
-      beginShot,
+      beginShot: null,
     };
 
     this.shotCtrl = {
       ballSpeed: 60,
       launchAngle: 10,
       directionAngle: 1,
-      action: shotFunc,
-    };
-
-    let shotFunc = function () {
-      // sample
-      fetch("../asset/sample.json")
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("json data: ", data);
-          sampleShotdata = data;
-
-          // ... init points here
-          // create line segments
-          const points = [];
-          sampleShotdata.points.forEach((element) => {
-            console.log(element.x, element.z, element.y);
-            points.push(new Vector3(element.x, element.z, element.y));
-          });
-          const material = new LineBasicMaterial({
-            color: 0xff3311,
-            linewidth: 10,
-          });
-          const geometry = new BufferGeometry().setFromPoints(points);
-
-          line = new Line(geometry, material);
-          line.geometry.setDrawRange(0, 0);
-          scene.add(line);
-        })
-        .catch((error) => console.log(error));
-
-      // const lineGeomtry = new lineGeomtry();
-      // lineGeomtry.setPositions(positions
-
-      beginShot = true;
-      index = 0;
-
-      cylinderGeom = new CylinderGeometry(2, 2, 5, 20);
-      cylinerMaterial = new MeshBasicMaterial({ color: 0xff3300 });
-      cylinder = new Mesh(cylinderGeom, cylinerMaterial);
-      scene.add(cylinder);
+      action: this.shotFunc,
     };
 
     let updateShot = function () {
@@ -54145,89 +54105,130 @@ MapControls.prototype.constructor = MapControls;
     //cylinder.rotation.x+=0.01;
     */
     };
-  };
 
-  let app = new Application();
-  app.init();
-  app.render();
+
+  Application.prototype.shotfunc = () => {
+    // sample
+    fetch("../asset/sample.json")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("json data: ", data);
+        sampleshotdata = data;
+
+        // ... init points here
+        // create line segments
+        const points = [];
+        sampleshotdata.points.foreach((element) => {
+          console.log(element.x, element.z, element.y);
+          points.push(new three.vector3(element.x, element.z, element.y));
+        });
+        const material = new three.linebasicmaterial({
+          color: 0xff3311,
+          linewidth: 10,
+        });
+        const geometry = new three.buffergeometry().setfrompoints(points);
+
+        line = new three.line(geometry, material);
+        line.geometry.setdrawrange(0, 0);
+        scene.add(line);
+      })
+      .catch((error) => console.log(error));
+
+    // const linegeomtry = new linegeomtry();
+    // linegeomtry.setpositions(positions
+
+    beginshot = true;
+    index = 0;
+
+    cylindergeom = new three.cylindergeometry(2, 2, 5, 20);
+    cylinermaterial = new three.meshbasicmaterial({ color: 0xff3300 });
+    cylinder = new three.mesh(cylindergeom, cylinermaterial);
+    scene.add(cylinder);
+  };
 
   Application.prototype.init = () => {
     console.log("initialize scene");
-    undefined.threejs.scene = new Scene();
-    undefined.threejs.scene.add(new AxesHelper(20));
+    this.threejs.scene = new Scene();
+    this.threejs.scene.add(new AxesHelper(20));
 
     console.log("initialize renderer");
-    undefined.threejs.renderer = new WebGLRenderer({ antialias: true });
-    undefined.threejs.renderer.setSize(window.innerWidth, window.innerHeight);
-    undefined.threejs.renderer.setClearColor(0x3f67b5);
-    document.body.appendChild(undefined.threejs.renderer.domElement);
+    this.threejs.renderer = new WebGLRenderer({ antialias: true });
+    this.threejs.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.threejs.renderer.setClearColor(0x3f67b5);
+    document.body.appendChild(this.threejs.renderer.domElement);
 
     console.log("initialize camera");
-    undefined.threejs.camera = new PerspectiveCamera(
+    this.threejs.camera = new PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       1,
       1000
     );
-    undefined.threejs.camera.position.set(-40, 10, 60);
+    this.threejs.camera.position.set(-40, 10, 60);
 
-    undefined.threejs.controls = new OrbitControls(
-      undefined.threejs.camera,
-      renderer.domElement
+    this.threejs.controls = new OrbitControls(
+      this.threejs.camera,
+      this.threejs.renderer.domElement
     );
-    undefined.threejs.controls.minDistance = 10;
-    undefined.threejs.controls.maxDistance = 500;
+    this.threejs.controls.minDistance = 10;
+    this.threejs.controls.maxDistance = 500;
 
-    undefined.threejs.stats = new stats_module();
-    document.body.appendChild(undefined.threejs.stats.domElement);
+    this.threejs.stats = new stats_module();
+    document.body.appendChild(this.threejs.stats.domElement);
 
-    undefined.threejs.gui = new GUI$1();
-    undefined.threejs.guiCamera = undefined.threejs.gui.addFolder("Camera");
-    undefined.threejs.guiCamera.add(undefined.threejs.camera.position, "z", 0, 10);
-    undefined.threejs.guiCamera.open();
+    this.threejs.gui = new GUI$1();
+    this.threejs.guiCamera = this.threejs.gui.addFolder("Camera");
+    this.threejs.guiCamera.add(this.threejs.camera.position, "z", 0, 10);
+    this.threejs.guiCamera.open();
 
-    undefined.threejs.guiShot = undefined.threejs.gui.addFolder("Shot");
-    undefined.threejs.guiShot.add(shotCtrl, "ballSpeed", 0, 100, 1);
-    undefined.threejs.guiShot.add(shotCtrl, "launchAngle", 0, 50, 1);
-    undefined.threejs.guiShot.add(shotCtrl, "directionAngle", 0, 50, 1);
-    undefined.threejs.guiShot.add(shotCtrl, "action");
-    undefined.threejs.guiShot.open();
+    this.threejs.guiShot = this.threejs.gui.addFolder("Shot");
+    this.threejs.guiShot.add(this.shotCtrl, "ballSpeed", 0, 100, 1);
+    this.threejs.guiShot.add(this.shotCtrl, "launchAngle", 0, 50, 1);
+    this.threejs.guiShot.add(this.shotCtrl, "directionAngle", 0, 50, 1);
+    //this.threejs.guiShot.add(this.shotCtrl, "action");
+    this.threejs.guiShot.open();
 
     // elements (grid)
     const gridSize = 10;
     const gridDiv = 10;
     const gridHelper = new GridHelper(gridSize, gridDiv);
-    undefined.threejs.scene.add(gridHelper);
+    this.threejs.scene.add(gridHelper);
 
     const geometry = new BoxGeometry(1, 1, 1);
     const material = new MeshBasicMaterial({ color: 0x00ff00 });
-    undefined.threejs.cube = new Mesh(geometry, material);
-    undefined.threejs.scene.add(undefined.threejs.cube);
+    this.threejs.cube = new Mesh(geometry, material);
+    this.threejs.scene.add(this.threejs.cube);
 
     const sphereGeometry = new SphereGeometry(2, 50, 32);
     const sphereMaterial = new MeshNormalMaterial();
     sphereMaterial.flatShading = true;
 
-    undefined.threejs.sphere = new Mesh(sphereGeometry, sphereMaterial);
-    undefined.threejs.sphere.position.x = 10;
-    undefined.threejs.scene.add(undefined.threejs.sphere);
+    this.threejs.sphere = new Mesh(sphereGeometry, sphereMaterial);
+    this.threejs.sphere.position.x = 10;
+    this.threejs.scene.add(this.threejs.sphere);
   };
 
   Application.prototype.render = () => {
-    requestAnimationFrame(render);
+    requestAnimationFrame(this.render);
 
-    undefined.threejs.sphere.rotation.x += 0.01;
-    undefined.threejs.sphere.rotation.y += 0.01;
+    this.threejs.sphere.rotation.x += 0.01;
+    this.threejs.sphere.rotation.y += 0.01;
 
-    undefined.threejs.controls.update();
-    undefined.threejs.stats.update();
+    this.threejs.controls.update();
+    this.threejs.stats.update();
 
-    undefined.threejs.renderer.render(undefined.threejs.scene, undefined.threejs.camera);
+    this.threejs.renderer.render(this.threejs.scene, this.threejs.camera);
 
     if (beginShot) {
-      undefined.updateShot();
+      this.updateShot();
     }
   };
+  }
+
+
+  let app = new Application();
+  app.init();
+  app.render();
 })();
 
 

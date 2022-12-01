@@ -6,80 +6,40 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // Application
 (() => {
   "use strict";
-
-  function Application (){
+  function Application() {
     this.threejs = {
-      scene : null,
-      renderer,
-      camera,
-      controls,
-      stats,
-      gui,
-      guiCamera,
-      guiShot,
-      cube,
-      sphere,
-      cylinderGeom,
-      cylinerMaterial,
-      cylinder,
-      line,
+      scene: null,
+      renderer: null,
+      camera: null,
+      controls: null,
+      stats: null,
+      gui: null,
+      guiCamera: null,
+      guiShot: null,
+      cube: null,
+      sphere: null,
+      cylinderGeom: null,
+      cylinerMaterial: null,
+      cylinder: null,
+      line: null,
     };
 
     this.shotdata = {
-      index,
+      index: null,
       sampleShotdata: {
         points: [],
       },
     };
 
     this.state = {
-      beginShot,
+      beginShot: null,
     };
 
     this.shotCtrl = {
       ballSpeed: 60,
       launchAngle: 10,
       directionAngle: 1,
-      action: shotFunc,
-    };
-
-    let shotFunc = function () {
-      // sample
-      fetch("../asset/sample.json")
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("json data: ", data);
-          sampleShotdata = data;
-
-          // ... init points here
-          // create line segments
-          const points = [];
-          sampleShotdata.points.forEach((element) => {
-            console.log(element.x, element.z, element.y);
-            points.push(new THREE.Vector3(element.x, element.z, element.y));
-          });
-          const material = new THREE.LineBasicMaterial({
-            color: 0xff3311,
-            linewidth: 10,
-          });
-          const geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-          line = new THREE.Line(geometry, material);
-          line.geometry.setDrawRange(0, 0);
-          scene.add(line);
-        })
-        .catch((error) => console.log(error));
-
-      // const lineGeomtry = new lineGeomtry();
-      // lineGeomtry.setPositions(positions
-
-      beginShot = true;
-      index = 0;
-
-      cylinderGeom = new THREE.CylinderGeometry(2, 2, 5, 20);
-      cylinerMaterial = new THREE.MeshBasicMaterial({ color: 0xff3300 });
-      cylinder = new THREE.Mesh(cylinderGeom, cylinerMaterial);
-      scene.add(cylinder);
+      action: this.shotFunc,
     };
 
     let updateShot = function () {
@@ -101,11 +61,46 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
     //cylinder.rotation.x+=0.01;
     */
     };
-  };
 
-  let app = new Application();
-  app.init();
-  app.render();
+
+  Application.prototype.shotfunc = () => {
+    // sample
+    fetch("../asset/sample.json")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("json data: ", data);
+        sampleshotdata = data;
+
+        // ... init points here
+        // create line segments
+        const points = [];
+        sampleshotdata.points.foreach((element) => {
+          console.log(element.x, element.z, element.y);
+          points.push(new three.vector3(element.x, element.z, element.y));
+        });
+        const material = new three.linebasicmaterial({
+          color: 0xff3311,
+          linewidth: 10,
+        });
+        const geometry = new three.buffergeometry().setfrompoints(points);
+
+        line = new three.line(geometry, material);
+        line.geometry.setdrawrange(0, 0);
+        scene.add(line);
+      })
+      .catch((error) => console.log(error));
+
+    // const linegeomtry = new linegeomtry();
+    // linegeomtry.setpositions(positions
+
+    beginshot = true;
+    index = 0;
+
+    cylindergeom = new three.cylindergeometry(2, 2, 5, 20);
+    cylinermaterial = new three.meshbasicmaterial({ color: 0xff3300 });
+    cylinder = new three.mesh(cylindergeom, cylinermaterial);
+    scene.add(cylinder);
+  };
 
   Application.prototype.init = () => {
     console.log("initialize scene");
@@ -129,7 +124,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
     this.threejs.controls = new OrbitControls(
       this.threejs.camera,
-      renderer.domElement
+      this.threejs.renderer.domElement
     );
     this.threejs.controls.minDistance = 10;
     this.threejs.controls.maxDistance = 500;
@@ -143,10 +138,10 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
     this.threejs.guiCamera.open();
 
     this.threejs.guiShot = this.threejs.gui.addFolder("Shot");
-    this.threejs.guiShot.add(shotCtrl, "ballSpeed", 0, 100, 1);
-    this.threejs.guiShot.add(shotCtrl, "launchAngle", 0, 50, 1);
-    this.threejs.guiShot.add(shotCtrl, "directionAngle", 0, 50, 1);
-    this.threejs.guiShot.add(shotCtrl, "action");
+    this.threejs.guiShot.add(this.shotCtrl, "ballSpeed", 0, 100, 1);
+    this.threejs.guiShot.add(this.shotCtrl, "launchAngle", 0, 50, 1);
+    this.threejs.guiShot.add(this.shotCtrl, "directionAngle", 0, 50, 1);
+    //this.threejs.guiShot.add(this.shotCtrl, "action");
     this.threejs.guiShot.open();
 
     // elements (grid)
@@ -170,7 +165,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
   };
 
   Application.prototype.render = () => {
-    requestAnimationFrame(render);
+    requestAnimationFrame(this.render);
 
     this.threejs.sphere.rotation.x += 0.01;
     this.threejs.sphere.rotation.y += 0.01;
@@ -184,4 +179,10 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
       this.updateShot();
     }
   };
+  }
+
+
+  let app = new Application();
+  app.init();
+  app.render();
 })();
