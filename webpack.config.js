@@ -27,9 +27,17 @@ module.exports = {
         include: path.resolve(__dirname, 'src'),
         use: ['style-loader', 'css-loader', 'postcss-loader'],
       },
+      {
+        test: /\.(gif|png|jpe?g|svg|json)$/i,
+        use: {
+          loader: 'file-loader',
+          options: {
+            name: '[name].[contenthash].[ext]',
+          },
+        },
+      },
     ],
   },
-
   devServer: {
     static: { directory: path.join(__dirname, 'dist') },
     port: 9000,

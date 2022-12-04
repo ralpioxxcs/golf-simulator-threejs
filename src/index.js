@@ -5,13 +5,22 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import './tailwind.css';
 
+import checkerboardImg from '../assets/checkerboard.jpg';
+import grassImg from '../assets/grass.jpg';
+import { sampleData } from './sample';
+
+import { check } from "prettier";
+
 // Application
 (() => {
   "use strict";
 
+  const AXIS_SIZE = 30;
+
   class Application {
+
     constructor() {
-      this.threejs = {
+      this.three = {
         scene: null,
         renderer: null,
         camera: null,
@@ -28,15 +37,16 @@ import './tailwind.css';
         line: null,
       };
 
+      this.objects = {
+        floor: null,
+      }
+
       this.shotdata = {
-        index: null,
-        sampleShotdata: {
-          points: [],
-        },
+        index: 0,
       };
 
       this.state = {
-        beginShot: null,
+        beginShot: false,
       };
 
       this.shotCtrl = {
@@ -45,131 +55,132 @@ import './tailwind.css';
         directionAngle: 1,
         backSpin: 4000,
         sideSpin: 1000,
-        shooting: this.shootingFunc,
+        shooting: Shooting,
       };
     }
 
     updateShot() {
-      this.threejs.line.geometry.setDrawRange(0, index++);
+      this.three.line.geometry.setDrawRange(0, this.shotdata.index++);
     }
 
-    shootingFunc() {
-      // sample
-      fetch("../asset/sample.json")
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("json data: ", data);
-          sampleshotdata = data;
+    shooting() {
+      const points = [];
+      sampleData.points.forEach((element) => {
+        console.log(element.x, element.z, element.y);
+        points.push(new THREE.Vector3(element.x, element.z, -element.y));
+      });
 
-          // ... init points here
-          // create line segments
-          const points = [];
-          sampleshotdata.points.foreach((element) => {
-            console.log(element.x, element.z, element.y);
-            points.push(new three.vector3(element.x, element.z, element.y));
-          });
-          const material = new three.linebasicmaterial({
-            color: 0xff3311,
-            linewidth: 10,
-          });
-          const geometry = new three.buffergeometry().setfrompoints(points);
+      const material = new THREE.LineBasicMaterial({
+        color: 0xff3311,
+        linewidth: 10,
+      });
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
 
-          line = new three.line(geometry, material);
-          line.geometry.setdrawrange(0, 0);
-          scene.add(line);
-        })
-        .catch((error) => console.log(error));
+      this.three.line = new THREE.Line(geometry, material);
+      this.three.line.geometry.setDrawRange(0, 0);
+      this.three.scene.add(this.three.line);
 
-      // const linegeomtry = new linegeomtry();
-      // linegeomtry.setpositions(positions
-
-      beginshot = true;
-      index = 0;
-
-      cylindergeom = new three.cylindergeometry(2, 2, 5, 20);
-      cylinermaterial = new three.meshbasicmaterial({ color: 0xff3300 });
-      cylinder = new three.mesh(cylindergeom, cylinermaterial);
-      scene.add(cylinder);
+      this.state.beginShot = true;
+      this.shotdata.index = 0;
     };
 
     init() {
       console.log("initialize scene");
-      this.threejs.scene = new THREE.Scene();
-      this.threejs.scene.add(new THREE.AxesHelper(20));
+      this.three.scene = new THREE.Scene();
+      this.three.scene.add(new THREE.AxesHelper(AXIS_SIZE));
 
       console.log("initialize renderer");
-      this.threejs.renderer = new THREE.WebGLRenderer({ antialias: true });
-      this.threejs.renderer.setSize(window.innerWidth, window.innerHeight);
-      this.threejs.renderer.setClearColor(0x3f67b5);
+      this.three.renderer = new THREE.WebGLRenderer({ antialias: true });
+      this.three.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.three.renderer.setClearColor(0x3f67b5);
 
-      document.getElementById('render-container').appendChild(this.threejs.renderer.domElement);
+      document.getElementById('render-container').appendChild(this.three.renderer.domElement);
 
       console.log("initialize camera");
-      this.threejs.camera = new THREE.PerspectiveCamera(
+      this.three.camera = new THREE.PerspectiveCamera(
         75,
         window.innerWidth / window.innerHeight,
         1,
         1000
       );
-      this.threejs.camera.position.set(-40, 10, 60);
+      this.three.camera.position.set(0, 150, 400);
+      this.three.camera.lookAt(this.three.scene.position)
 
-      this.threejs.controls = new OrbitControls(
-        this.threejs.camera,
-        this.threejs.renderer.domElement
+      this.three.controls = new OrbitControls(
+        this.three.camera,
+        this.three.renderer.domElement
       );
-      this.threejs.controls.minDistance = 10;
-      this.threejs.controls.maxDistance = 500;
+      this.three.controls.minDistance = 10;
+      this.three.controls.maxDistance = 500;
 
-      this.threejs.stats = new Stats();
-      document.body.appendChild(this.threejs.stats.domElement);
+      this.three.stats = new Stats();
+      document.body.appendChild(this.three.stats.domElement);
 
-      this.threejs.gui = new GUI();
-      this.threejs.guiCamera = this.threejs.gui.addFolder("Camera setting");
-      this.threejs.guiCamera.add(this.threejs.camera.position, "z", 0, 10);
-      this.threejs.guiCamera.open();
+      this.three.gui = new GUI();
+      this.three.guiCamera = this.three.gui.addFolder("Camera setting");
+      this.three.guiCamera.add(this.three.camera.position, "z", 0, 10);
+      this.three.guiCamera.open();
 
-      this.threejs.guiPanel = this.threejs.gui.addFolder("Shot setting");
-      this.threejs.guiPanel.add(this.shotCtrl, "ballSpeed", 0, 100, 1);
-      this.threejs.guiPanel.add(this.shotCtrl, "launchAngle", 0, 50, 1);
-      this.threejs.guiPanel.add(this.shotCtrl, "directionAngle", 0, 50, 1);
-      this.threejs.guiPanel.add(this.shotCtrl, "shooting");
-      this.threejs.guiPanel.open();
+      this.three.guiPanel = this.three.gui.addFolder("Shot setting");
+      this.three.guiPanel.add(this.shotCtrl, "ballSpeed", 0, 100, 1);
+      this.three.guiPanel.add(this.shotCtrl, "launchAngle", 0, 50, 1);
+      this.three.guiPanel.add(this.shotCtrl, "directionAngle", 0, 50, 1);
+      this.three.guiPanel.add(this.shotCtrl, "shooting");
+      this.three.guiPanel.open();
 
       // elements (grid)
       const gridSize = 10;
       const gridDiv = 10;
       const gridHelper = new THREE.GridHelper(gridSize, gridDiv);
-      this.threejs.scene.add(gridHelper);
+      this.three.scene.add(gridHelper);
 
       const geometry = new THREE.BoxGeometry(1, 1, 1);
       const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      this.threejs.cube = new THREE.Mesh(geometry, material);
-      this.threejs.scene.add(this.threejs.cube);
+      this.three.cube = new THREE.Mesh(geometry, material);
+      this.three.scene.add(this.three.cube);
 
       const sphereGeometry = new THREE.SphereGeometry(2, 50, 32);
       const sphereMaterial = new THREE.MeshNormalMaterial();
       sphereMaterial.flatShading = true;
 
-      this.threejs.sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-      this.threejs.sphere.position.x = 10;
-      this.threejs.scene.add(this.threejs.sphere);
+      this.three.sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+      this.three.sphere.position.x = 10;
+      this.three.scene.add(this.three.sphere);
+
+      // Floor(grass)
+      const tex = new THREE.TextureLoader().load(grassImg);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(50, 50);
+      const floorMaterial = new THREE.MeshBasicMaterial({
+        map: tex,
+        side: THREE.DoubleSide
+      });
+      const floorGeometry = new THREE.PlaneGeometry(2000, 2000, 1, 1);
+      const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+      floor.y=-0.5;
+      floor.rotateX(-Math.PI/2);
+      this.three.scene.add(floor);
     };
 
     render() {
       requestAnimationFrame(Animate);
 
-      this.threejs.sphere.rotation.x += 0.01;
-      this.threejs.sphere.rotation.y += 0.01;
+      this.three.sphere.rotation.x += 0.01;
+      this.three.sphere.rotation.y += 0.01;
 
-      this.threejs.controls.update();
-      this.threejs.stats.update();
+      this.three.controls.update();
+      this.three.stats.update();
 
-      this.threejs.renderer.render(this.threejs.scene, this.threejs.camera);
+      this.three.renderer.render(this.three.scene, this.three.camera);
 
       if (this.state.beginShot) {
         this.updateShot();
       }
     };
+  }
+
+  function Shooting() {
+    app.shooting();
   }
 
   function Animate() {
@@ -179,4 +190,5 @@ import './tailwind.css';
   let app = new Application();
   app.init();
   app.render();
+
 })();
