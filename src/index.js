@@ -59,6 +59,7 @@ import { check } from "prettier";
 
       this.state = {
         beginShot: false,
+        keyInput: {}
       };
 
       this.shotCtrl = {
@@ -192,19 +193,40 @@ import { check } from "prettier";
       this.three.scene.add(this.objects.floor);
 
       // Events
+      let self = this;
       document.addEventListener('keydown', (ev) => {
-        console.debug(ev);
-      })
+        self.state.keyInput[ev.code] = true;
+      });
       document.addEventListener('keyup', (ev) => {
-        console.debug(ev);
-      })
-
+        self.state.keyInput[ev.code] = false;
+      });
+      window.addEventListener('resize', onWindowResize);
     };
+
+    onWindowResize() {
+      this.three.camera.aspect = window.innerWidth / window.innerHeight;
+      this.three.camera.updateProjectionMatrix();
+      this.three.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
     render() {
       let delta;
 
       //updateControls();
+      if(this.state.keyInput['KeyW']) {
+        this.three.camera.position.z -= 0.01;
+      }
+      if(this.state.keyInput['KeyA']) {
+        this.three.camera.position.x -= 0.01;
+      }
+      if(this.state.keyInput['KeyS']) {
+        this.three.camera.position.x += 0.01;
+      }
+      if(this.state.keyInput['KeyD']) {
+        this.three.camera.position.z += 0.01;
+      }
+
+
       this.three.orbitCtrl.update();
 
       if (this.state.beginShot) {
@@ -223,6 +245,10 @@ import { check } from "prettier";
 
   function Animate() {
     app.render();
+  }
+
+  function onWindowResize() {
+    app.onWindowResize();
   }
 
   let app = new Application();
