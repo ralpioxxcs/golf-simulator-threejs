@@ -1,6 +1,8 @@
 import * as THREE from "three";
+
 import Stats from "three/examples/jsm/libs/stats.module";
 import { GUI } from "dat.gui";
+
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import './tailwind.css';
@@ -15,18 +17,27 @@ import { check } from "prettier";
 (() => {
   "use strict";
 
-  const AXIS_SIZE = 30;
+  const AXIS_SIZE = 10;
+  const GRID_SIZE = 10;
+  const FOV = 65;
+  const NEAR = 1;
+  const FAR = 500;
+
+  const BALL_DIAMETER = 0.043;
+  const GRAVITY = 30;
+
+  const THREE_CONTAINER = document.getElementById('render-container');
 
   class Application {
 
     constructor() {
       this.three = {
-        scene: null,
-        renderer: null,
-        camera: null,
-        controls: null,
-        stats: null,
-        gui: null,
+        scene: THREE.Scene,
+        renderer: THREE.WebGLRenderer,
+        camera: THREE.PerspectiveCamera,
+        orbitCtrl: OrbitControls, // orbit control
+        stats: Stats,
+        gui: GUI,
         guiCamera: null,
         guiPanel: null,
         cube: null,
@@ -38,7 +49,8 @@ import { check } from "prettier";
       };
 
       this.objects = {
-        floor: null,
+        ball: THREE.Mesh,
+        floor: THREE.Mesh,
       }
 
       this.shotdata = {
@@ -71,7 +83,7 @@ import { check } from "prettier";
       });
 
       const material = new THREE.LineBasicMaterial({
-        color: 0xff3311,
+        color: new THREE.Color(THREE.MathUtils.randFloat(0.0, 1.0), THREE.MathUtils.randFloat(0.0, 1.0), THREE.MathUtils.randFloat(0.0, 1.0)),
         linewidth: 10,
       });
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -85,40 +97,63 @@ import { check } from "prettier";
     };
 
     init() {
-      console.log("initialize scene");
+      // Scene
+      console.debug("initialize scene");
       this.three.scene = new THREE.Scene();
       this.three.scene.add(new THREE.AxesHelper(AXIS_SIZE));
+      this.three.scene.add(new THREE.AmbientLight(0x505050));
 
-      console.log("initialize renderer");
+      // Renderer
+      console.debug("initialize renderer");
       this.three.renderer = new THREE.WebGLRenderer({ antialias: true });
       this.three.renderer.setSize(window.innerWidth, window.innerHeight);
-      this.three.renderer.setClearColor(0x3f67b5);
+      this.three.renderer.setClearColor(0x808080);
+      this.three.renderer.shadowMap.enabled = true;
+      this.three.renderer.shadowMap.type = THREE.VSMShadowMap;
+      // this.three.renderer.outputEncoding = THREE.sRGBEncoding;
+      // this.three.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      THREE_CONTAINER.appendChild(this.three.renderer.domElement);
 
-      document.getElementById('render-container').appendChild(this.three.renderer.domElement);
-
+      // Camera
       console.log("initialize camera");
-      this.three.camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        1,
-        1000
-      );
-      this.three.camera.position.set(0, 150, 400);
-      this.three.camera.lookAt(this.three.scene.position)
+      this.three.camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR, FAR);
+      this.three.camera.position.set(0, 2.0, 5);
+      //this.three.camera.lookAt(new THREE.Vector3(0, 1.8, 5));
 
-      this.three.controls = new OrbitControls(
-        this.three.camera,
-        this.three.renderer.domElement
-      );
-      this.three.controls.minDistance = 10;
-      this.three.controls.maxDistance = 500;
+      // Lights
+      const ambLight = new THREE.AmbientLight(0x404040, 0.7);
+      this.three.scene.add(ambLight);
 
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+      dirLight.position.set(1, 0.5, 0);
+      dirLight.castShadow = true;
+      dirLight.shadow.camera.near = 0.01;
+      dirLight.shadow.camera.far = 100;
+      this.three.scene.add(dirLight);
+
+      // const helper = new THREE.CameraHelper(dirLight.shadow.camera);
+      // this.three.scene.add(helper);
+
+      // Controls (world view)
+      this.three.orbitCtrl = new OrbitControls(this.three.camera, this.three.renderer.domElement);
+      this.three.orbitCtrl.target.set(0, 1, 0);
+      this.three.orbitCtrl.minPolarAngle = THREE.MathUtils.degToRad(0);
+      this.three.orbitCtrl.maxPolarAngle = THREE.MathUtils.degToRad(95);
+      this.three.orbitCtrl.minDistance = 0;
+      this.three.orbitCtrl.maxDistance = 500;
+
+      // Stats
       this.three.stats = new Stats();
-      document.body.appendChild(this.three.stats.domElement);
+      this.three.stats.domElement.style.position = 'absolute';
+      this.three.stats.domElement.style.position = '0px';
+      THREE_CONTAINER.appendChild(this.three.stats.domElement);
 
+      // GUI
       this.three.gui = new GUI();
       this.three.guiCamera = this.three.gui.addFolder("Camera setting");
-      this.three.guiCamera.add(this.three.camera.position, "z", 0, 10);
+      this.three.guiCamera.add(this.three.camera.position, "x", -100, 100);
+      this.three.guiCamera.add(this.three.camera.position, "y", 0, 50);
+      this.three.guiCamera.add(this.three.camera.position, "z", 0, 200);
       this.three.guiCamera.open();
 
       this.three.guiPanel = this.three.gui.addFolder("Shot setting");
@@ -128,54 +163,57 @@ import { check } from "prettier";
       this.three.guiPanel.add(this.shotCtrl, "shooting");
       this.three.guiPanel.open();
 
-      // elements (grid)
-      const gridSize = 10;
-      const gridDiv = 10;
-      const gridHelper = new THREE.GridHelper(gridSize, gridDiv);
-      this.three.scene.add(gridHelper);
+      // Objects
+      // Grid
+      this.three.scene.add(new THREE.GridHelper(GRID_SIZE, 10));
 
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      this.three.cube = new THREE.Mesh(geometry, material);
-      this.three.scene.add(this.three.cube);
+      // Ready ball
+      const readyBallGeometry = new THREE.SphereGeometry(BALL_DIAMETER, 32, 16); // diameter : 4.3cm
+      const readyBallMaterial = new THREE.MeshPhysicalMaterial({ color: 0xffffff, flatShading: true, clearcoat: 0.5 })
+      this.objects.ball = new THREE.Mesh(readyBallGeometry, readyBallMaterial);
+      this.objects.ball.position.x = 0;
+      this.objects.ball.position.y = BALL_DIAMETER / 2;
+      this.objects.ball.position.z = 0;
+      this.three.scene.add(this.objects.ball);
 
-      const sphereGeometry = new THREE.SphereGeometry(2, 50, 32);
-      const sphereMaterial = new THREE.MeshNormalMaterial();
-      sphereMaterial.flatShading = true;
-
-      this.three.sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-      this.three.sphere.position.x = 10;
-      this.three.scene.add(this.three.sphere);
-
-      // Floor(grass)
+      // Floor (grass)
       const tex = new THREE.TextureLoader().load(grassImg);
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(50, 50);
+      tex.repeat.set(1000, 1000);
       const floorMaterial = new THREE.MeshBasicMaterial({
         map: tex,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
       const floorGeometry = new THREE.PlaneGeometry(2000, 2000, 1, 1);
-      const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-      floor.y=-0.5;
-      floor.rotateX(-Math.PI/2);
-      this.three.scene.add(floor);
+      this.objects.floor = new THREE.Mesh(floorGeometry, floorMaterial);
+      this.objects.floor.y = -0.5;
+      this.objects.floor.rotateX(-Math.PI / 2);
+      this.objects.floor.receiveShadow = true;
+      this.three.scene.add(this.objects.floor);
+
+      // Events
+      document.addEventListener('keydown', (ev) => {
+        console.debug(ev);
+      })
+      document.addEventListener('keyup', (ev) => {
+        console.debug(ev);
+      })
+
     };
 
     render() {
-      requestAnimationFrame(Animate);
+      let delta;
 
-      this.three.sphere.rotation.x += 0.01;
-      this.three.sphere.rotation.y += 0.01;
-
-      this.three.controls.update();
-      this.three.stats.update();
-
-      this.three.renderer.render(this.three.scene, this.three.camera);
+      //updateControls();
+      this.three.orbitCtrl.update();
 
       if (this.state.beginShot) {
         this.updateShot();
       }
+
+      this.three.renderer.render(this.three.scene, this.three.camera);
+      this.three.stats.update();
+      requestAnimationFrame(Animate);
     };
   }
 
@@ -188,6 +226,7 @@ import { check } from "prettier";
   }
 
   let app = new Application();
+
   app.init();
   app.render();
 
