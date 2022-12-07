@@ -4,6 +4,8 @@ import Stats from "three/examples/jsm/libs/stats.module";
 import { GUI } from "dat.gui";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { FlyControls } from "three/examples/jsm/controls/FlyControls";
+import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls";
 
 import './tailwind.css';
 
@@ -28,6 +30,8 @@ import { check } from "prettier";
 
   const THREE_CONTAINER = document.getElementById('render-container');
 
+  const clock = new THREE.Clock();
+
   class Application {
 
     constructor() {
@@ -35,7 +39,8 @@ import { check } from "prettier";
         scene: THREE.Scene,
         renderer: THREE.WebGLRenderer,
         camera: THREE.PerspectiveCamera,
-        orbitCtrl: OrbitControls, // orbit control
+        ctrl: OrbitControls, // orbit control
+        ctrl2: FirstPersonControls, // orbit control
         stats: Stats,
         gui: GUI,
         guiCamera: null,
@@ -119,7 +124,7 @@ import { check } from "prettier";
       console.log("initialize camera");
       this.three.camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR, FAR);
       this.three.camera.position.set(0, 2.0, 5);
-      //this.three.camera.lookAt(new THREE.Vector3(0, 1.8, 5));
+      this.three.camera.lookAt(new THREE.Vector3(0, 1.8, 5));
 
       // Lights
       const ambLight = new THREE.AmbientLight(0x404040, 0.7);
@@ -136,12 +141,17 @@ import { check } from "prettier";
       // this.three.scene.add(helper);
 
       // Controls (world view)
-      this.three.orbitCtrl = new OrbitControls(this.three.camera, this.three.renderer.domElement);
-      this.three.orbitCtrl.target.set(0, 1, 0);
-      this.three.orbitCtrl.minPolarAngle = THREE.MathUtils.degToRad(0);
-      this.three.orbitCtrl.maxPolarAngle = THREE.MathUtils.degToRad(95);
-      this.three.orbitCtrl.minDistance = 0;
-      this.three.orbitCtrl.maxDistance = 500;
+      this.three.ctrl = new OrbitControls(this.three.camera, this.three.renderer.domElement);
+      this.three.ctrl.target.set(0, 1, 0);
+      this.three.ctrl.minPolarAngle = THREE.MathUtils.degToRad(0);
+      this.three.ctrl.maxPolarAngle = THREE.MathUtils.degToRad(95);
+      this.three.ctrl.minDistance = 0;
+      this.three.ctrl.maxDistance = 500;
+
+      this.three.ctrl2 = new FirstPersonControls(this.three.camera, this.three.renderer.domElement);
+      this.three.ctrl2.awctiveLook = false;
+      this.three.ctrl2.autoForward = false;
+      // this.three.ctrl.domElement = this.three.renderer.domElement;
 
       // Stats
       this.three.stats = new Stats();
@@ -210,24 +220,24 @@ import { check } from "prettier";
     }
 
     render() {
-      let delta;
+      let delta = clock.getDelta();
 
       //updateControls();
-      if(this.state.keyInput['KeyW']) {
-        this.three.camera.position.z -= 0.01;
-      }
-      if(this.state.keyInput['KeyA']) {
-        this.three.camera.position.x -= 0.01;
-      }
-      if(this.state.keyInput['KeyS']) {
-        this.three.camera.position.x += 0.01;
-      }
-      if(this.state.keyInput['KeyD']) {
-        this.three.camera.position.z += 0.01;
-      }
+      // if(this.state.keyInput['KeyW']) {
+      //   this.three.camera.position.z -= 0.01;
+      // }
+      // if(this.state.keyInput['KeyA']) {
+      //   this.three.camera.position.x -= 0.01;
+      // }
+      // if(this.state.keyInput['KeyS']) {
+      //   this.three.camera.position.x += 0.01;
+      // }
+      // if(this.state.keyInput['KeyD']) {
+      //   this.three.camera.position.z += 0.01;
+      // }
 
-
-      this.three.orbitCtrl.update();
+      this.three.ctrl.update();
+      this.three.ctrl2.update(delta);
 
       if (this.state.beginShot) {
         this.updateShot();
